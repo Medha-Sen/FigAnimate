@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FigAnimate — Diagram-to-Animation Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F4F7FB;--surface:#FFFFFF;--ink:#0F172A;--ink2:#334155;--ink3:#64748B;
+  --border:#E2E8F0;--border2:#CBD5E1;
+  --brand:#7C3AED;--brand-bg:#EDE9FE;--brand-light:#DDD6FE;--brand-mid:#A78BFA;--brand-dark:#5B21B6;
+  --p0:#7C3AED;--p0bg:#EDE9FE;--p0light:#DDD6FE;--p0mid:#A78BFA;--p0dark:#5B21B6;
+  --p1:#0D9488;--p1bg:#F0FDFA;--p1light:#99F6E4;--p1mid:#2DD4BF;--p1dark:#0F766E;
+  --p2:#D97706;--p2bg:#FFFBEB;--p2light:#FDE68A;--p2mid:#FCD34D;--p2dark:#B45309;
+  --p3:#DB2777;--p3bg:#FDF2F8;--p3light:#FBCFE8;--p3mid:#F9A8D4;--p3dark:#BE185D;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* HEADER */
+header{
+  background:rgba(255,255,255,0.92);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);padding:13px 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:20;box-shadow:0 2px 16px rgba(0,0,0,0.03)
+}
+.logo{display:flex;align-items:center;gap:11px;text-decoration:none;font-size:21px;font-weight:700;letter-spacing:-0.5px;color:var(--ink)}
+.logo em{color:var(--brand);font-style:normal}
+
+/* MULTI-AGENT LOGO ICON */
+.logo-icon{
+  width:38px;height:38px;border-radius:11px;
+  background:linear-gradient(140deg,#6D28D9 0%,#7C3AED 55%,#4F46E5 100%);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;flex-shrink:0;
+  box-shadow:0 4px 16px rgba(124,58,237,0.32)
+}
+.logo-icon::after{
+  content:'';position:absolute;top:-80%;left:-30%;
+  width:50%;height:200%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.16),transparent);
+  animation:iconShimmer 3.5s ease-in-out infinite;transform:skewX(-15deg)
+}
+@keyframes iconShimmer{0%,100%{left:-30%;opacity:0}35%{opacity:1}55%{left:130%;opacity:1}65%{opacity:0}}
+
+/* Agent-swarm SVG inside icon */
+.logo-icon svg{position:relative;z-index:1}
+
+.header-pill{
+  font-size:11px;font-weight:600;letter-spacing:0.3px;
+  background:var(--brand-bg);color:var(--brand-dark);
+  padding:6px 14px;border-radius:99px;border:1px solid var(--brand-light)
+}
+
+/* PAGE */
+.page{max-width:1100px;margin:0 auto;padding:60px 24px 120px;display:flex;flex-direction:column;align-items:center}
+.section-label{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:11px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;
+  color:var(--ink3);background:var(--surface);border:1px solid var(--border);
+  padding:6px 16px;border-radius:99px;margin-bottom:20px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.02)
+}
+
+/* DIAGRAM BOX */
+.diagram-wrap{width:100%;max-width:600px}
+.diagram-box{
+  width:100%;background:var(--surface);border:1px solid var(--border);border-radius:22px;
+  padding:24px;display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;cursor:zoom-in;
+  box-shadow:0 8px 28px rgba(0,0,0,0.04);
+  transition:border-color .25s,box-shadow .25s,transform .25s
+}
+.diagram-box:hover{border-color:var(--brand-light);box-shadow:0 16px 40px rgba(124,58,237,0.08);transform:translateY(-3px)}
+.diagram-box img{max-width:100%;max-height:200px;object-fit:contain;border-radius:8px;position:relative;z-index:1}
+.zoom-hint{
+  position:absolute;bottom:14px;right:14px;
+  font-size:11px;font-weight:600;color:var(--ink3);
+  background:rgba(255,255,255,0.92);border:1px solid var(--border);
+  padding:5px 11px;border-radius:99px;z-index:2;
+  display:flex;align-items:center;gap:5px;
+  opacity:0;transition:opacity .2s;box-shadow:0 2px 8px rgba(0,0,0,0.05)
+}
+.diagram-box:hover .zoom-hint{opacity:1}
+.ph-inner{display:flex;flex-direction:column;align-items:center;gap:14px;z-index:1;width:100%;padding:24px 0}
+.ph-icon{width:60px;height:60px;border-radius:14px;background:#F8FAFC;border:2px dashed var(--border2);display:flex;align-items:center;justify-content:center}
+.ph-icon svg{opacity:0.28}
+.ph-text{font-size:15px;color:var(--ink3);font-weight:500}
+.ph-path{font-size:12px;font-family:'DM Mono',monospace;color:var(--ink3);background:#F1F5F9;padding:5px 12px;border-radius:8px}
+
+/* VERTICAL CONNECTOR */
+.vconn{display:flex;flex-direction:column;align-items:center;padding:14px 0 6px}
+.vconn-track{position:relative;width:3px;height:44px;background:linear-gradient(to bottom,var(--border2),var(--brand-light));border-radius:2px}
+.vconn-ball{
+  position:absolute;left:50%;transform:translateX(-50%);
+  width:10px;height:10px;border-radius:50%;
+  background:var(--brand);box-shadow:0 0 0 4px var(--brand-bg);
+  animation:dropBall 1.9s cubic-bezier(.4,0,.2,1) infinite;top:-5px
+}
+@keyframes dropBall{
+  0%{top:-5px;opacity:0;transform:translateX(-50%) scale(.5)}
+  18%{opacity:1;transform:translateX(-50%) scale(1)}
+  82%{opacity:1;transform:translateX(-50%) scale(1)}
+  100%{top:44px;opacity:0;transform:translateX(-50%) scale(.5)}
+}
+.vconn-arrow{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:9px solid var(--brand-light);margin-top:-1px}
+
+/* MID ROW */
+.mid-row{width:100%;display:flex;align-items:stretch;justify-content:center;gap:22px;margin-bottom:6px}
+
+/* STYLE PANEL */
+.style-panel{
+  background:var(--surface);border:1px solid var(--border);border-radius:22px;
+  padding:22px 18px;display:flex;flex-direction:column;gap:9px;
+  flex-shrink:0;width:236px;box-shadow:0 8px 24px rgba(0,0,0,0.03)
+}
+.sp-label{font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--ink3);padding-bottom:11px;border-bottom:1px solid var(--border);margin-bottom:2px}
+.srow{
+  display:flex;align-items:center;gap:13px;cursor:pointer;
+  padding:11px 13px;border-radius:13px;border:1.5px solid transparent;
+  transition:background .18s,transform .18s,border-color .18s;user-select:none
+}
+.srow:hover{background:#F8FAFC;transform:translateX(3px)}
+.srow:active{transform:scale(.98)}
+.srow.on0{background:var(--p0bg);border-color:var(--p0light);box-shadow:0 3px 10px rgba(124,58,237,.09)}
+.srow.on1{background:var(--p1bg);border-color:var(--p1light)}
+.srow.on2{background:var(--p2bg);border-color:var(--p2light)}
+.srow.on3{background:var(--p3bg);border-color:var(--p3light)}
+.scb{width:21px;height:21px;border-radius:6px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--surface);transition:all .18s}
+.srow.on0 .scb{background:var(--p0);border-color:var(--p0)}
+.srow.on1 .scb{background:var(--p1);border-color:var(--p1)}
+.srow.on2 .scb{background:var(--p2);border-color:var(--p2)}
+.srow.on3 .scb{background:var(--p3);border-color:var(--p3)}
+.scb svg{display:none;width:11px;height:11px;stroke-width:2.5}
+.srow[class*="on"] .scb svg{display:block}
+.sname{font-size:14px;font-weight:500;color:var(--ink)}
+
+/* HORIZONTAL CONNECTOR */
+.hconn{display:flex;align-items:center;flex-shrink:0}
+.htrack{position:relative;height:3px;width:38px;background:linear-gradient(to right,var(--border2),var(--brand-light));border-radius:2px}
+.hball{
+  position:absolute;top:50%;transform:translateY(-50%);
+  width:10px;height:10px;border-radius:50%;
+  background:var(--brand);box-shadow:0 0 0 4px var(--brand-bg);
+  animation:rightBall 1.6s cubic-bezier(.4,0,.2,1) infinite;left:-5px
+}
+@keyframes rightBall{
+  0%{left:-5px;opacity:0;transform:translateY(-50%) scale(.5)}
+  18%{opacity:1;transform:translateY(-50%) scale(1)}
+  82%{opacity:1;transform:translateY(-50%) scale(1)}
+  100%{left:38px;opacity:0;transform:translateY(-50%) scale(.5)}
+}
+.harrow{width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-left:9px solid var(--brand-light);margin-left:-1px}
+
+/* ENGINE BOX */
+.engine-box{
+  flex:1;max-width:480px;border-radius:22px;padding:44px 24px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;background:var(--surface);overflow:hidden;
+  border:1.5px solid var(--brand-light);
+  box-shadow:0 12px 36px rgba(124,58,237,.05)
+}
+.eng-grid{
+  position:absolute;inset:0;z-index:0;
+  background-image:radial-gradient(var(--border) 1px,transparent 1px);
+  background-size:24px 24px;opacity:0.45
+}
+.eng-spin{
+  position:absolute;top:-60%;left:-60%;width:220%;height:220%;
+  background:conic-gradient(from 0deg,transparent,rgba(124,58,237,.05) 25%,transparent 50%,rgba(245,158,11,.04) 75%,transparent);
+  animation:spinBg 16s linear infinite;z-index:0
+}
+@keyframes spinBg{100%{transform:rotate(360deg)}}
+
+.eng-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center}
+
+/* MULTI-AGENT HUB ICON — engine version */
+.eng-hub-wrap{position:relative;width:92px;height:92px;display:flex;align-items:center;justify-content:center}
+.eng-hub-ring{
+  position:absolute;inset:-10px;border-radius:50%;
+  border:2px dashed var(--brand-light);
+  animation:hubRingSpin 7s linear infinite
+}
+@keyframes hubRingSpin{100%{transform:rotate(360deg)}}
+.eng-hub-ring2{
+  position:absolute;inset:-22px;border-radius:50%;
+  border:1px dashed #E8E0FD;
+  animation:hubRingSpin 12s linear infinite reverse
+}
+.eng-hub{
+  width:92px;height:92px;border-radius:24px;
+  background:linear-gradient(140deg,#6D28D9 0%,#7C3AED 55%,#4F46E5 100%);
+  display:flex;align-items:center;justify-content:center;
+  border:3px solid #FFFFFF;position:relative;overflow:hidden;
+  box-shadow:0 8px 28px rgba(124,58,237,.28);
+  animation:hubPulse 4s ease-in-out infinite alternate
+}
+.eng-hub::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0px,rgba(255,255,255,.05) 3px,transparent 3px,transparent 14px)
+}
+@keyframes hubPulse{
+  0%{transform:scale(.97);box-shadow:0 6px 18px rgba(124,58,237,.2)}
+  100%{transform:scale(1.03);box-shadow:0 14px 38px rgba(124,58,237,.38)}
+}
+/* orbiting amber spark */
+.hub-spark{
+  position:absolute;width:13px;height:13px;border-radius:50%;
+  background:#F59E0B;border:2px solid #FEF3C7;
+  top:-6px;right:-6px;
+  animation:sparkOrbit 2.2s ease-in-out infinite alternate
+}
+@keyframes sparkOrbit{0%{transform:scale(.8);opacity:.7}100%{transform:scale(1.15);opacity:1}}
+
+.eng-name{font-size:31px;font-weight:700;color:var(--ink);letter-spacing:-1px;line-height:1}
+.eng-name em{color:var(--brand);font-style:normal}
+.eng-tagline{font-size:12px;color:var(--ink3);font-weight:500;letter-spacing:.2px}
+
+/* OUTPUT PANELS */
+.panels-wrap{width:100%;margin-top:8px}
+.panels-hint{
+  text-align:center;font-size:14px;color:var(--ink3);
+  margin-bottom:22px;font-weight:500;min-height:22px;
+  transition:color .3s;letter-spacing:.2px
+}
+.panels-hint.live{color:var(--ink)}
+.panels-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+
+.anim-card{
+  background:var(--surface);border:1.5px solid var(--border);border-radius:22px;
+  overflow:hidden;display:flex;flex-direction:column;cursor:pointer;
+  transition:opacity .3s,filter .3s,transform .32s cubic-bezier(.4,0,.2,1),border-color .3s,box-shadow .3s;
+  opacity:.48;filter:grayscale(.75) opacity(.8);
+  box-shadow:0 4px 16px rgba(0,0,0,.02)
+}
+.anim-card.on{opacity:1;filter:none;transform:translateY(-5px);border-width:2px}
+.anim-card.on:hover{transform:translateY(-9px)}
+.anim-card.on.c0{border-color:var(--p0light);box-shadow:0 14px 36px rgba(124,58,237,.1)}
+.anim-card.on.c1{border-color:var(--p1light);box-shadow:0 14px 36px rgba(13,148,136,.1)}
+.anim-card.on.c2{border-color:var(--p2light);box-shadow:0 14px 36px rgba(217,119,6,.1)}
+.anim-card.on.c3{border-color:var(--p3light);box-shadow:0 14px 36px rgba(219,39,119,.1)}
+.anim-card:not(.on) .card-visual *{animation-play-state:paused!important}
+
+.card-top{padding:14px 16px 12px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:9px}
+.card-num{font-size:10px;font-weight:700;font-family:'DM Mono',monospace;color:var(--ink3);background:#F1F5F9;padding:3px 7px;border-radius:5px}
+.card-title{font-size:13px;font-weight:600;color:var(--ink);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;opacity:0;transition:opacity .3s;white-space:nowrap;text-transform:uppercase;letter-spacing:.4px}
+.anim-card.on .card-badge{opacity:1}
+.c0 .card-badge{background:var(--p0bg);color:var(--p0dark)}
+.c1 .card-badge{background:var(--p1bg);color:var(--p1dark)}
+.c2 .card-badge{background:var(--p2bg);color:var(--p2dark)}
+.c3 .card-badge{background:var(--p3bg);color:var(--p3dark)}
+
+.card-visual{flex:1;min-height:230px;display:flex;align-items:center;justify-content:center;padding:22px;position:relative;overflow:hidden}
+.c0 .card-visual{background:linear-gradient(150deg,#EDE9FE 0%,#F8FAFC 100%)}
+.c1 .card-visual{background:linear-gradient(150deg,#F0FDFA 0%,#F8FAFC 100%)}
+.c2 .card-visual{background:linear-gradient(150deg,#FFFBEB 0%,#F8FAFC 100%)}
+.c3 .card-visual{background:linear-gradient(150deg,#FDF2F8 0%,#F8FAFC 100%)}
+
+.svg-obj{width:100%;aspect-ratio:16/9;max-height:175px;display:block;border-radius:8px;border:none;pointer-events:none}
+.card-expand{
+  position:absolute;bottom:12px;right:12px;width:30px;height:30px;
+  border-radius:9px;background:rgba(255,255,255,.9);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .2s,transform .2s;
+  backdrop-filter:blur(4px);box-shadow:0 2px 8px rgba(0,0,0,.05);z-index:10
+}
+.anim-card.on:hover .card-expand{opacity:1;transform:scale(1.06)}
+.card-expand svg{width:13px;height:13px;color:var(--ink2);stroke-width:2.5}
+.card-foot{padding:10px 16px;border-top:1.5px solid var(--border);font-size:11px;color:var(--ink3);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#F8FAFC}
+
+/* FALLBACK ANIMATIONS */
+.pr-wrap{width:100%;display:flex;flex-direction:column;gap:7px}
+.pr-box{border-radius:9px;padding:11px 14px;font-size:12px;font-weight:600;border:1.5px solid var(--p0light);color:var(--p0dark);background:var(--surface);opacity:0;transform:translateY(7px);animation:prReveal 3.4s ease infinite;box-shadow:0 3px 10px rgba(124,58,237,.04)}
+.pr-box:nth-child(1){animation-delay:0s}.pr-box:nth-child(2){animation-delay:.68s}.pr-box:nth-child(3){animation-delay:1.36s}.pr-box:nth-child(4){animation-delay:2.04s}
+@keyframes prReveal{0%,100%{opacity:0;transform:translateY(7px)}14%,86%{opacity:1;transform:translateY(0)}}
+.am-circ{width:104px;height:104px;border-radius:50%;background:linear-gradient(135deg,var(--p1light),var(--p1mid));position:relative;overflow:hidden;animation:amFade 2.6s ease-in-out infinite;margin:0 auto}
+.am-circ::after{content:'';position:absolute;inset:0;border-radius:50%;background:linear-gradient(135deg,transparent 30%,rgba(255,255,255,.65));animation:amSweep 2.6s ease-in-out infinite}
+@keyframes amFade{0%,100%{opacity:.22;transform:scale(.94)}50%{opacity:1;transform:scale(1.05)}}
+@keyframes amSweep{0%,100%{transform:rotate(0deg)}50%{transform:rotate(180deg)}}
+.sb-wrap{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.sb-track{width:100%;height:4px;background:var(--border2);border-radius:2px}
+.sb-box{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:11px;background:var(--surface);border:2.5px solid var(--p2mid);animation:sbSlide 2.3s ease-in-out infinite;box-shadow:0 6px 20px rgba(217,119,6,.14)}
+@keyframes sbSlide{0%,100%{left:0}50%{left:calc(100% - 46px)}}
+.hb-wrap{display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+.hb-row{display:flex;gap:11px;align-items:center}
+.hb-node{width:42px;height:42px;border-radius:11px;border:2px solid var(--p3light);background:var(--surface);flex-shrink:0;position:relative}
+.hb-node.active{border-color:var(--p3);background:var(--p3bg);animation:hbHop .52s cubic-bezier(.34,1.56,.64,1) forwards;box-shadow:0 6px 18px rgba(219,39,119,.18)}
+.hb-ring{position:absolute;inset:-8px;border-radius:17px;border:2px solid var(--p3mid);opacity:0;animation:hbRing 2s ease infinite}
+@keyframes hbHop{0%{transform:scale(1)}50%{transform:scale(1.18) translateY(-7px)}100%{transform:scale(1)}}
+@keyframes hbRing{0%{opacity:0;transform:scale(.8)}40%{opacity:.55}100%{opacity:0;transform:scale(1.38)}}
+
+/* LIGHTBOX */
+.lightbox{display:none;position:fixed;inset:0;z-index:100;background:rgba(15,23,42,.6);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px}
+.lightbox.open{display:flex;animation:lbFade .22s ease}
+@keyframes lbFade{from{opacity:0}to{opacity:1}}
+.lb-card{background:var(--surface);border-radius:28px;overflow:hidden;max-width:840px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 28px 72px rgba(0,0,0,.18);border:1px solid var(--border);animation:lbPop .28s cubic-bezier(.34,1.4,.64,1)}
+@keyframes lbPop{from{transform:scale(.91) translateY(18px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.lb-header{padding:22px 30px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:13px;flex-shrink:0}
+.lb-num{font-size:11px;font-weight:700;font-family:'DM Mono',monospace;color:var(--ink3);background:#F1F5F9;padding:5px 9px;border-radius:7px}
+.lb-title{font-size:19px;font-weight:700;color:var(--ink);flex:1}
+.lb-badge{font-size:11px;font-weight:700;padding:5px 13px;border-radius:99px;text-transform:uppercase;letter-spacing:.4px}
+.lb-close{width:38px;height:38px;border-radius:11px;border:1.5px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .18s,transform .18s;flex-shrink:0}
+.lb-close:hover{background:#F8FAFC;transform:scale(1.06)}
+.lb-close svg{width:17px;height:17px;color:var(--ink2);stroke-width:2.5}
+.lb-body{flex:1;overflow-y:auto;display:flex;align-items:center;justify-content:center;padding:44px 36px;min-height:340px}
+.lb-body img{max-width:100%;max-height:62vh;object-fit:contain;border-radius:14px;display:block;box-shadow:0 14px 36px rgba(0,0,0,.08)}
+.lb-foot{padding:18px 30px;border-top:1px solid var(--border);font-size:11px;color:var(--ink3);font-family:'DM Mono',monospace;flex-shrink:0;background:#F8FAFC}
+
+/* RESPONSIVE */
+@media(max-width:900px){.panels-grid{grid-template-columns:repeat(2,1fr);gap:14px}}
+@media(max-width:720px){
+  header{padding:14px 18px}
+  .page{padding:36px 14px 72px}
+  .mid-row{flex-direction:column;align-items:center;gap:20px}
+  .style-panel{width:100%;max-width:380px}
+  .engine-box{width:100%;max-width:380px;padding:36px 20px}
+  .hconn{display:none}
+  .card-visual{min-height:190px}
+}
+@media(max-width:480px){.panels-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#">
+    <div class="logo-icon">
+      <!-- Multi-agent swarm icon: 3 nodes with orbit ring and data paths -->
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- connection lines between agents -->
+        <line x1="12" y1="12" x2="6" y2="7" stroke="rgba(255,255,255,0.45)" stroke-width="1"/>
+        <line x1="12" y1="12" x2="18" y2="7" stroke="rgba(255,255,255,0.45)" stroke-width="1"/>
+        <line x1="12" y1="12" x2="12" y2="19" stroke="rgba(255,255,255,0.45)" stroke-width="1"/>
+        <!-- central coordinator node -->
+        <circle cx="12" cy="12" r="3.2" fill="white" opacity="0.95"/>
+        <!-- agent nodes -->
+        <circle cx="6" cy="7" r="2.4" fill="rgba(255,255,255,0.75)"/>
+        <circle cx="18" cy="7" r="2.4" fill="rgba(255,255,255,0.75)"/>
+        <circle cx="12" cy="19" r="2.4" fill="rgba(255,255,255,0.75)"/>
+        <!-- activity dots on agents -->
+        <circle cx="6" cy="7" r="1" fill="#FCD34D"/>
+        <circle cx="18" cy="7" r="1" fill="#6EE7B7"/>
+        <circle cx="12" cy="19" r="1" fill="#C4B5FD"/>
+      </svg>
+    </div>
+    Fig<em>Animate</em>
+  </a>
+  <div class="header-pill">Diagram-to-Animation Engine</div>
+</header>
+
+<div class="page">
+
+  <div class="section-label">Original Diagram</div>
+  <div class="diagram-wrap">
+    <div class="diagram-box" onclick="openDiagram()" title="Click to expand">
+      <img id="diagImg" src="1806.08246v2-Figure1-1.png" alt="Original diagram"
+           onerror="this.style.display='none';document.getElementById('ph').style.display='flex'">
+      <div id="ph" style="display:none;flex-direction:column;align-items:center;gap:14px;z-index:1;width:100%;padding:22px 0">
+        <div class="ph-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="4"/><path d="M3 9h18M9 21V9"/>
+          </svg>
+        </div>
+        <div class="ph-text">Awaiting Source Diagram</div>
+        <div class="ph-path">upload_or_drop_diagram.svg</div>
+      </div>
+      <div class="zoom-hint">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        Expand
+      </div>
+    </div>
+  </div>
+
+  <div class="vconn">
+    <div class="vconn-track"><div class="vconn-ball"></div></div>
+    <div class="vconn-arrow"></div>
+  </div>
+
+  <div class="mid-row">
+
+    <div class="style-panel">
+      <div class="sp-label">Animation Style</div>
+      <div class="srow" id="r0" onclick="tog(0)">
+        <div class="scb"><svg viewBox="0 0 11 11"><path d="M1.5 5.5l2.8 2.8 5-5.5" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+        <span class="sname">Progressive Reveal</span>
+      </div>
+      <div class="srow" id="r1" onclick="tog(1)">
+        <div class="scb"><svg viewBox="0 0 11 11"><path d="M1.5 5.5l2.8 2.8 5-5.5" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+        <span class="sname">Alpha Masking</span>
+      </div>
+      <div class="srow" id="r2" onclick="tog(2)">
+        <div class="scb"><svg viewBox="0 0 11 11"><path d="M1.5 5.5l2.8 2.8 5-5.5" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+        <span class="sname">Sliding BBox</span>
+      </div>
+      <div class="srow" id="r3" onclick="tog(3)">
+        <div class="scb"><svg viewBox="0 0 11 11"><path d="M1.5 5.5l2.8 2.8 5-5.5" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+        <span class="sname">Hopping BBox</span>
+      </div>
+    </div>
+
+    <div class="hconn">
+      <div class="htrack"><div class="hball"></div></div>
+      <div class="harrow"></div>
+    </div>
+
+    <div class="engine-box">
+      <div class="eng-spin"></div>
+      <div class="eng-grid"></div>
+      <div class="eng-content">
+
+        <div class="eng-hub-wrap">
+          <div class="eng-hub-ring2"></div>
+          <div class="eng-hub-ring"></div>
+          <div class="eng-hub">
+            <!-- Large multi-agent icon for engine -->
+            <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- connection lines -->
+              <line x1="26" y1="26" x2="12" y2="14" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+              <line x1="26" y1="26" x2="40" y2="14" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+              <line x1="26" y1="26" x2="12" y2="40" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+              <line x1="26" y1="26" x2="40" y2="40" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+              <!-- outer agent nodes -->
+              <circle cx="12" cy="14" r="5.5" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+              <circle cx="40" cy="14" r="5.5" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+              <circle cx="12" cy="40" r="5.5" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+              <circle cx="40" cy="40" r="5.5" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+              <!-- agent activity indicators (animated via CSS) -->
+              <circle cx="12" cy="14" r="2.2" fill="#FCD34D" class="ag-dot ag-a"/>
+              <circle cx="40" cy="14" r="2.2" fill="#6EE7B7" class="ag-dot ag-b"/>
+              <circle cx="12" cy="40" r="2.2" fill="#C4B5FD" class="ag-dot ag-c"/>
+              <circle cx="40" cy="40" r="2.2" fill="#FCA5A5" class="ag-dot ag-d"/>
+              <!-- central coordinator -->
+              <circle cx="26" cy="26" r="7" fill="white" opacity="0.95"/>
+              <circle cx="26" cy="26" r="3.5" fill="#7C3AED"/>
+            </svg>
+          </div>
+          <div class="hub-spark"></div>
+        </div>
+
+        <div class="eng-name">Fig<em>Animate</em></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="vconn">
+    <div class="vconn-track"><div class="vconn-ball"></div></div>
+    <div class="vconn-arrow"></div>
+  </div>
+
+  <div class="panels-wrap">
+    <div class="panels-hint" id="phint">Select one or more animation styles above to preview outputs</div>
+    <div class="panels-grid">
+
+      <div class="anim-card c0" id="card0" onclick="openCard(0)">
+        <div class="card-top">
+          <span class="card-num">01</span>
+          <span class="card-title">Progressive Reveal</span>
+          <span class="card-badge">Active</span>
+        </div>
+        <div class="card-visual">
+          <object type="image/svg+xml" class="svg-obj" id="obj0">
+            <div class="pr-wrap">
+              <div class="pr-box">Feature Extractor</div>
+              <div class="pr-box">Model Training</div>
+              <div class="pr-box">Dictionary Map</div>
+              <div class="pr-box">Output Detection</div>
+            </div>
+          </object>
+          <div class="card-expand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div>
+        </div>
+      </div>
+
+      <div class="anim-card c1" id="card1" onclick="openCard(1)">
+        <div class="card-top">
+          <span class="card-num">02</span>
+          <span class="card-title">Alpha Masking</span>
+          <span class="card-badge">Active</span>
+        </div>
+        <div class="card-visual">
+          <object type="image/svg+xml" class="svg-obj" id="obj1">
+            <div class="am-circ"></div>
+          </object>
+          <div class="card-expand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div>
+        </div>
+      </div>
+
+      <div class="anim-card c2" id="card2" onclick="openCard(2)">
+        <div class="card-top">
+          <span class="card-num">03</span>
+          <span class="card-title">Sliding BBox</span>
+          <span class="card-badge">Active</span>
+        </div>
+        <div class="card-visual">
+          <object type="image/svg+xml" class="svg-obj" id="obj2">
+            <div class="sb-wrap"><div class="sb-track"></div><div class="sb-box"></div></div>
+          </object>
+          <div class="card-expand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div>
+        </div>
+      </div>
+
+      <div class="anim-card c3" id="card3" onclick="openCard(3)">
+        <div class="card-top">
+          <span class="card-num">04</span>
+          <span class="card-title">Hopping BBox</span>
+          <span class="card-badge">Active</span>
+        </div>
+        <div class="card-visual">
+          <object type="image/svg+xml" class="svg-obj" id="obj3">
+            <div class="hb-wrap">
+              <div class="hb-row">
+                <div class="hb-node" id="hb0"><div class="hb-ring"></div></div>
+                <div class="hb-node" id="hb1"></div>
+                <div class="hb-node" id="hb2"></div>
+                <div class="hb-node" id="hb3"></div>
+              </div>
+            </div>
+          </object>
+          <div class="card-expand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lb" onclick="closeLB(event)">
+  <div class="lb-card" id="lbCard">
+    <div class="lb-header">
+      <span class="lb-num" id="lbNum"></span>
+      <span class="lb-title" id="lbTitle"></span>
+      <span class="lb-badge" id="lbBadge"></span>
+      <div class="lb-close" onclick="closeLB(null,true)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </div>
+    </div>
+    <div class="lb-body" id="lbBody"></div>
+    <div class="lb-foot" id="lbFoot"></div>
+  </div>
+</div>
+
+<style>
+.ag-dot{animation:agPulse 1.6s ease-in-out infinite alternate}
+.ag-b{animation-delay:.3s}.ag-c{animation-delay:.6s}.ag-d{animation-delay:.9s}
+@keyframes agPulse{0%{opacity:.4;transform:scale(.7)}100%{opacity:1;transform:scale(1.2)}}
+</style>
+
+<script>
+const state=[false,false,false,false];
+const nice=['Progressive Reveal','Alpha Masking','Sliding BBox','Hopping BBox'];
+const nums=['01','02','03','04'];
+const imgSrc=['prog_reveal_raw.svg','alpha_mask_raw.svg','slide_bbox_raw.svg','hop_bbox_raw.svg'];
+const colors=[
+  {badge:'background:var(--p0bg);color:var(--p0dark)',body:'background:linear-gradient(150deg,#EDE9FE,#F8FAFC)'},
+  {badge:'background:var(--p1bg);color:var(--p1dark)',body:'background:linear-gradient(150deg,#F0FDFA,#F8FAFC)'},
+  {badge:'background:var(--p2bg);color:var(--p2dark)',body:'background:linear-gradient(150deg,#FFFBEB,#F8FAFC)'},
+  {badge:'background:var(--p3bg);color:var(--p3dark)',body:'background:linear-gradient(150deg,#FDF2F8,#F8FAFC)'},
+];
+
+function openCard(i){
+  if(!state[i])return;
+  const body=document.getElementById('lbBody');
+  document.getElementById('lbNum').textContent=nums[i];
+  document.getElementById('lbTitle').textContent=nice[i];
+  document.getElementById('lbBadge').textContent='ACTIVE';
+  document.getElementById('lbBadge').style.cssText=colors[i].badge;
+  document.getElementById('lbFoot').textContent='source: '+imgSrc[i];
+  body.style.cssText=colors[i].body+';flex:1;overflow-y:auto;display:flex;align-items:center;justify-content:center;padding:44px 36px;min-height:340px';
+  body.innerHTML='';
+  const obj=document.createElement('object');
+  obj.data=imgSrc[i];obj.type='image/svg+xml';
+  obj.style.cssText='width:100%;aspect-ratio:16/9;max-width:800px;display:block;box-shadow:0 14px 36px rgba(0,0,0,.08);border-radius:14px;border:none';
+  body.appendChild(obj);
+  document.getElementById('lb').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function openDiagram(){
+  const body=document.getElementById('lbBody');
+  document.getElementById('lbNum').textContent='00';
+  document.getElementById('lbTitle').textContent='Original Source Diagram';
+  document.getElementById('lbBadge').textContent='SOURCE';
+  document.getElementById('lbBadge').style.cssText='background:#F1F5F9;color:#475569';
+  document.getElementById('lbFoot').textContent='source_file: 1806.08246v2-Figure1-1.png';
+  body.style.cssText='flex:1;overflow-y:auto;display:flex;align-items:center;justify-content:center;padding:44px 36px;min-height:340px;background:linear-gradient(150deg,#F8FAFC,#FFFFFF)';
+  const el=document.getElementById('diagImg');
+  body.innerHTML=el&&el.style.display!=='none'
+    ?'<img src="'+el.src+'" style="max-width:100%;max-height:62vh;object-fit:contain;border-radius:14px;display:block;box-shadow:0 14px 36px rgba(0,0,0,.08)">'
+    :'<div style="color:var(--ink3);font-size:15px;font-weight:500">No diagram loaded</div>';
+  document.getElementById('lb').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeLB(e,force){
+  if(force||!e||e.target===document.getElementById('lb')){
+    document.getElementById('lb').classList.remove('open');
+    document.body.style.overflow='';
+    setTimeout(()=>document.getElementById('lbBody').innerHTML='',280);
+  }
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLB(null,true)});
+
+function tog(i){state[i]=!state[i];render()}
+
+function render(){
+  const on=state.reduce((a,v,i)=>{if(v)a.push(i);return a},[]);
+  for(let i=0;i<4;i++){
+    const obj=document.getElementById('obj'+i);
+    document.getElementById('r'+i).className='srow'+(state[i]?' on'+i:'');
+    document.getElementById('card'+i).classList.toggle('on',state[i]);
+    if(state[i]){if(obj.getAttribute('data')!==imgSrc[i])obj.setAttribute('data',imgSrc[i])}
+    else obj.removeAttribute('data');
+  }
+  const ph=document.getElementById('phint');
+  if(!on.length){ph.textContent='Select one or more animation styles above to preview outputs';ph.classList.remove('live')}
+  else{ph.textContent=on.length===4?'All animation styles active — looking great ✦':on.map(i=>nice[i]).join(', ')+' active';ph.classList.add('live')}
+}
+
+let hbIdx=0;
+setInterval(()=>{
+  for(let i=0;i<4;i++)document.getElementById('hb'+i)?.classList.remove('active');
+  document.getElementById('hb'+hbIdx)?.classList.add('active');
+  hbIdx=(hbIdx+1)%4;
+},700);
+</script>
+</body>
+</html>
