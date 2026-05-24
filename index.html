@@ -539,7 +539,6 @@ header{
       </div>
     </div>
     <div class="lb-body" id="lbBody"></div>
-    <div class="lb-foot" id="lbFoot"></div>
   </div>
 </div>
 
@@ -568,7 +567,6 @@ function openCard(i){
   document.getElementById('lbTitle').textContent=nice[i];
   document.getElementById('lbBadge').textContent='ACTIVE';
   document.getElementById('lbBadge').style.cssText=colors[i].badge;
-  document.getElementById('lbFoot').textContent='source: '+imgSrc[i];
   body.style.cssText=colors[i].body+';flex:1;overflow-y:auto;display:flex;align-items:center;justify-content:center;padding:44px 36px;min-height:340px';
   body.innerHTML='';
   const obj=document.createElement('object');
@@ -582,10 +580,9 @@ function openCard(i){
 function openDiagram(){
   const body=document.getElementById('lbBody');
   document.getElementById('lbNum').textContent='00';
-  document.getElementById('lbTitle').textContent='Original Source Diagram';
+  document.getElementById('lbTitle').textContent='Original Diagram';
   document.getElementById('lbBadge').textContent='SOURCE';
   document.getElementById('lbBadge').style.cssText='background:#F1F5F9;color:#475569';
-  document.getElementById('lbFoot').textContent='source_file: 1806.08246v2-Figure1-1.png';
   body.style.cssText='flex:1;overflow-y:auto;display:flex;align-items:center;justify-content:center;padding:44px 36px;min-height:340px;background:linear-gradient(150deg,#F8FAFC,#FFFFFF)';
   const el=document.getElementById('diagImg');
   body.innerHTML=el&&el.style.display!=='none'
