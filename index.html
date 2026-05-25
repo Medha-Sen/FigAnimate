@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FigAnimate — Diagram-to-Animation Pipeline</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght=0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -34,10 +34,49 @@ header{
   box-shadow:0 4px 12px rgba(124,58,237,0.3)
 }
 .logo-icon svg{position:relative;z-index:1;width:16px;height:16px;color:#fff;}
-.header-pill{
-  font-size:11px;font-weight:700;letter-spacing:0.5px;
-  background:var(--brand-bg);color:var(--brand-dark);
-  padding:6px 14px;border-radius:99px;border:1px solid var(--brand-light);text-transform:uppercase;
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.iiit-logo {
+  height: 38px;
+  object-fit: contain;
+  display: block;
+}
+.about-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--ink2);
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.04);
+}
+.about-btn svg {
+  width: 15px;
+  height: 15px;
+  color: var(--ink3);
+  transition: color 0.2s;
+}
+.about-btn:hover {
+  background: var(--brand-bg);
+  border-color: var(--brand-light);
+  color: var(--brand-dark);
+}
+.about-btn:hover svg {
+  color: var(--brand);
+}
+.about-btn:active {
+  transform: scale(0.97);
 }
 
 /* PIPELINE LAYOUT */
@@ -189,21 +228,28 @@ header{
 
 /* DOWNLOAD BTN & HIDDEN NOTE */
 .download-btn {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
-  padding: 6px 12px; border-radius: 8px; text-decoration: none;
-  transition: all 0.2s; border: 1px solid transparent;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 8px 16px; border-radius: 8px; text-decoration: none;
+  transition: all 0.2s; border: none;
   cursor: pointer;
+  background: linear-gradient(135deg, #EF4444, #F97316); 
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
 }
-.download-btn:active { transform: scale(0.96); }
-.download-btn svg { width: 12px; height: 12px; }
+.download-btn:hover { 
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
+  transform: translateY(-1px);
+}
+.download-btn:active { transform: scale(0.96) translateY(0); }
+.download-btn svg { width: 14px; height: 14px; }
 
 .pdf-note {
   font-size: 11px; color: var(--ink3);
   background: #F8FAFC; border: 1px solid var(--border); border-radius: 8px;
   padding: 10px 14px; margin-bottom: 16px; gap: 8px; align-items: flex-start;
   line-height: 1.4;
-  display: none; /* Hidden by default */
+  display: none;
   opacity: 0;
 }
 .pdf-note.visible {
@@ -234,7 +280,8 @@ header{
 .lightbox { display:none; position:fixed; inset:0; z-index:100; background:rgba(15, 23, 42, 0.75); backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:24px; animation:lbIn 0.2s ease; }
 .lightbox.open { display:flex; }
 @keyframes lbIn { from { opacity:0; } to { opacity:1; } }
-.lb-card { background:var(--surface); border-radius:24px; overflow:hidden; max-width:1100px; width:100%; height:85vh; display:flex; flex-direction:column; box-shadow:0 32px 80px rgba(0,0,0,0.25); border:1px solid var(--border); }
+.lb-card { background:var(--surface); border-radius:24px; overflow:hidden; max-width:1100px; width:100%; max-height:85vh; height: auto; display:flex; flex-direction:column; box-shadow:0 32px 80px rgba(0,0,0,0.25); border:1px solid var(--border); }
+.lb-card.short-modal { max-width: 520px; }
 .lb-card img, .lb-card object { max-width:100%; max-height:100%; object-fit:contain; }
 .lb-header { padding:20px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:#fff; flex-shrink:0; }
 .lb-title { font-size:16px; font-weight:700; color:var(--ink); letter-spacing: 0.5px; text-transform: uppercase;}
@@ -261,7 +308,13 @@ header{
     </div>
     FigAnimate
   </a>
-  <div class="header-pill">Pipeline Demo</div>
+  <div class="header-right">
+    <button class="about-btn" onclick="openZoom('about')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      About Project
+    </button>
+    <img src="logo.png" alt="IIIT Hyderabad Logo" class="iiit-logo" onerror="this.style.display='none'">
+  </div>
 </header>
 
 <div class="page">
@@ -352,7 +405,7 @@ header{
           </div>
           <a id="pdfDownloadLink" class="download-btn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-            Download PDF
+            Download PDF with Animation
           </a>
         </div>
         
@@ -421,7 +474,6 @@ function selectStyle(index) {
   const panel = document.getElementById('outPanel');
   const badge = document.getElementById('outBadge');
   const visual = document.getElementById('outVisual');
-  const dlBtn = document.getElementById('pdfDownloadLink');
   
   panel.style.borderColor = config.light;
   panel.style.boxShadow = `0 12px 36px ${config.color}15`;
@@ -429,10 +481,6 @@ function selectStyle(index) {
   badge.textContent = config.name;
   badge.style.backgroundColor = config.bg;
   badge.style.color = config.dark;
-
-  dlBtn.style.backgroundColor = config.bg;
-  dlBtn.style.color = config.dark;
-  dlBtn.style.borderColor = config.light;
   
   visual.style.background = `linear-gradient(150deg, ${config.bg}, #FFFFFF)`;
 
@@ -448,7 +496,6 @@ function selectStyle(index) {
   visual.prepend(newObj);
 }
 
-// Programmatic Blob conversion to strictly download and skip internal rendering
 document.getElementById('pdfDownloadLink').addEventListener('click', async (e) => {
   e.preventDefault();
   document.getElementById('pdfNote').classList.add('visible');
@@ -459,7 +506,6 @@ document.getElementById('pdfDownloadLink').addEventListener('click', async (e) =
     const response = await fetch(currentConfig.pdf);
     const blob = await response.blob();
     
-    // Forcing octet-stream tells the browser it's an unrenderable binary stream, preventing preview
     const forcedBlob = new Blob([blob], { type: 'application/octet-stream' });
     const downloadUrl = window.URL.createObjectURL(forcedBlob);
     
@@ -473,7 +519,6 @@ document.getElementById('pdfDownloadLink').addEventListener('click', async (e) =
     document.body.removeChild(triggerLink);
     window.URL.revokeObjectURL(downloadUrl);
   } catch (err) {
-    // Fallback if local/CORS constraints stop fetch (e.g. running mock UI from file://)
     const fallbackLink = document.createElement('a');
     fallbackLink.href = currentConfig.pdf;
     fallbackLink.download = currentConfig.pdf;
@@ -485,10 +530,12 @@ document.getElementById('pdfDownloadLink').addEventListener('click', async (e) =
 
 function openZoom(type) {
   const lb = document.getElementById('lb');
+  const lbCard = document.getElementById('lbCard');
   const lbTitle = document.getElementById('lbTitle');
   const lbBody = document.getElementById('lbBody');
   
   lbBody.innerHTML = ''; 
+  lbCard.classList.remove('short-modal');
 
   if (type === 'diagram') {
     lbTitle.textContent = 'Source Diagram';
@@ -502,6 +549,21 @@ function openZoom(type) {
     obj.type = 'image/svg+xml';
     obj.data = config.file;
     lbBody.appendChild(obj);
+  } else if (type === 'about') {
+    lbCard.classList.add('short-modal');
+    lbTitle.textContent = 'About Project';
+    lbBody.innerHTML = `
+      <div style="padding: 8px 12px; font-size: 15px; line-height: 1.6; color: var(--ink2); text-align: center;">
+        <p style="margin-bottom: 20px;">
+          Hi! I'm <strong>Medha</strong>. I'm a Ph.D. student at <strong>CVIT, IIIT Hyderabad</strong> working on this project under the guidance and supervision of <strong>Dr. Ravi Kiran Sarvadevabhatla</strong>.
+        </p>
+        <div style="border-top: 1px solid var(--border); padding-top: 16px;">
+          <span style="font-size: 11px; font-weight: 700; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Connect with us</span>
+          <a href="mailto:ravi.kiran@iiit.ac.in" style="color: var(--brand); font-weight: 600; text-decoration: none; font-size: 15px; display: block; margin-bottom: 6px;">ravi.kiran@iiit.ac.in</a>
+          <a href="mailto:medha.sen@research.iiit.ac.in" style="color: var(--brand); font-weight: 600; text-decoration: none; font-size: 15px; display: block;">medha.sen@research.iiit.ac.in</a>
+        </div>
+      </div>
+    `;
   }
   
   lb.classList.add('open');
