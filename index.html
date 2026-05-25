@@ -104,7 +104,7 @@ header{
 .srow.active .radio-btn::after{
   content:'';position:absolute;width:10px;height:10px;border-radius:50%;
 }
-.sname{font-size:14px;font-weight:600;color:var(--ink2);transition:color .2s}
+.srow.active .sname{font-size:14px;font-weight:600;color:var(--ink2);transition:color .2s}
 
 /* Specific Style Colors */
 .srow.active.c0{background:var(--p0bg);border-color:var(--p0light);box-shadow:0 3px 10px rgba(124,58,237,.09)}
@@ -148,7 +148,7 @@ header{
 .arrow-top { transform: rotate(20deg); transform-origin: left center; }
 .arrow-bot { transform: rotate(-20deg); transform-origin: left center; }
 
-/* ENGINE BOX (Matched to Image) */
+/* ENGINE BOX */
 .engine-box{
   width:100%;border-radius:24px;padding:32px 24px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -186,6 +186,39 @@ header{
   font-size:10px;font-weight:700;padding:4px 10px;border-radius:99px;
   text-transform:uppercase;letter-spacing:.5px;transition:all .3s;
 }
+
+/* DOWNLOAD BTN & HIDDEN NOTE */
+.download-btn {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 6px 12px; border-radius: 8px; text-decoration: none;
+  transition: all 0.2s; border: 1px solid transparent;
+  cursor: pointer;
+}
+.download-btn:active { transform: scale(0.96); }
+.download-btn svg { width: 12px; height: 12px; }
+
+.pdf-note {
+  font-size: 11px; color: var(--ink3);
+  background: #F8FAFC; border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 14px; margin-bottom: 16px; gap: 8px; align-items: flex-start;
+  line-height: 1.4;
+  display: none; /* Hidden by default */
+  opacity: 0;
+}
+.pdf-note.visible {
+  display: flex;
+  animation: slideDown 0.3s ease-out forwards;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pdf-note svg { width: 14px; height: 14px; color: var(--brand-mid); flex-shrink: 0; margin-top: 1px; }
+.pdf-note a { color: var(--brand); font-weight: 600; text-decoration: none; }
+.pdf-note a:hover { text-decoration: underline; }
+
 .output-visual{
   flex:1;display:flex;align-items:center;justify-content:center;
   background:linear-gradient(150deg,#F8FAFC,#FFFFFF);
@@ -202,6 +235,7 @@ header{
 .lightbox.open { display:flex; }
 @keyframes lbIn { from { opacity:0; } to { opacity:1; } }
 .lb-card { background:var(--surface); border-radius:24px; overflow:hidden; max-width:1100px; width:100%; height:85vh; display:flex; flex-direction:column; box-shadow:0 32px 80px rgba(0,0,0,0.25); border:1px solid var(--border); }
+.lb-card img, .lb-card object { max-width:100%; max-height:100%; object-fit:contain; }
 .lb-header { padding:20px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:#fff; flex-shrink:0; }
 .lb-title { font-size:16px; font-weight:700; color:var(--ink); letter-spacing: 0.5px; text-transform: uppercase;}
 .lb-close { width:36px; height:36px; border-radius:10px; background:var(--bg); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:0.2s; border:1px solid var(--border); }
@@ -214,7 +248,7 @@ header{
 @media(max-width:1100px){
   .pipeline{flex-direction:column;gap:16px;}
   .col-input, .col-engine, .col-output {width:100%; max-width:600px;}
-  .col-arrows-left, .col-arrows-right { display:none; } /* Hide arrows on mobile stacking */
+  .col-arrows-left, .col-arrows-right { display:none; } 
 }
 </style>
 </head>
@@ -311,10 +345,24 @@ header{
 
     <div class="col-output">
       <div class="panel output-panel" id="outPanel">
-        <div class="panel-header">
-          Output Animation
-          <span class="output-badge" id="outBadge">Loading...</span>
+        <div class="panel-header" style="align-items: center; border-bottom: none; padding-bottom: 0; margin-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            Output Animation
+            <span class="output-badge" id="outBadge">Loading...</span>
+          </div>
+          <a id="pdfDownloadLink" class="download-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Download PDF
+          </a>
         </div>
+        
+        <div class="pdf-note" id="pdfNote">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <div>
+            <strong>Important:</strong> PDF animations require dedicated readers to play. Please ensure you open downloaded files in <a href="https://get.adobe.com/reader/" target="_blank">Adobe Acrobat</a> or <a href="https://www.foxit.com/pdf-reader/" target="_blank">Foxit Reader</a>. Built-in browser viewers will only display a static page.
+          </div>
+        </div>
+
         <div class="output-visual" id="outVisual">
           <object id="mainSvgObj" type="image/svg+xml" class="svg-obj"></object>
           
@@ -346,12 +394,11 @@ header{
 </style>
 
 <script>
-// Data structure for the styles
 const styles = [
-  { id: 0, name: 'Progressive Reveal', file: 'prog_reveal_raw.svg',  color: 'var(--p0)', bg: 'var(--p0bg)', dark: 'var(--p0dark)', light: 'var(--p0light)' },
-  { id: 1, name: 'Alpha Masking',      file: 'alpha_mask_raw.svg',   color: 'var(--p1)', bg: 'var(--p1bg)', dark: 'var(--p1dark)', light: 'var(--p1light)' },
-  { id: 2, name: 'Sliding BBox',       file: 'slide_bbox_raw.svg',   color: 'var(--p2)', bg: 'var(--p2bg)', dark: 'var(--p2dark)', light: 'var(--p2light)' },
-  { id: 3, name: 'Hopping BBox',       file: 'hop_bbox_raw.svg',     color: 'var(--p3)', bg: 'var(--p3bg)', dark: 'var(--p3dark)', light: 'var(--p3light)' }
+  { id: 0, name: 'Progressive Reveal', file: 'prog_reveal_raw.svg', pdf: 'prog_reveal.pdf', color: 'var(--p0)', bg: 'var(--p0bg)', dark: 'var(--p0dark)', light: 'var(--p0light)' },
+  { id: 1, name: 'Alpha Masking',      file: 'alpha_mask_raw.svg',  pdf: 'alpha_mask.pdf',  color: 'var(--p1)', bg: 'var(--p1bg)', dark: 'var(--p1dark)', light: 'var(--p1light)' },
+  { id: 2, name: 'Sliding BBox',       file: 'slide_bbox_raw.svg',  pdf: 'slide_bbox.pdf',  color: 'var(--p2)', bg: 'var(--p2bg)', dark: 'var(--p2dark)', light: 'var(--p2light)' },
+  { id: 3, name: 'Hopping BBox',       file: 'hop_bbox_raw.svg',    pdf: 'hop_bbox.pdf',    color: 'var(--p3)', bg: 'var(--p3bg)', dark: 'var(--p3dark)', light: 'var(--p3light)' }
 ];
 
 let activeStyleIndex = 0;
@@ -360,7 +407,8 @@ function selectStyle(index) {
   activeStyleIndex = index;
   const config = styles[index];
 
-  // 1. Update Radio Buttons UI
+  document.getElementById('pdfNote').classList.remove('visible');
+
   for (let i = 0; i < styles.length; i++) {
     const row = document.getElementById('row' + i);
     if (i === index) {
@@ -370,10 +418,10 @@ function selectStyle(index) {
     }
   }
 
-  // 2. Update Output Panel Styling
   const panel = document.getElementById('outPanel');
   const badge = document.getElementById('outBadge');
   const visual = document.getElementById('outVisual');
+  const dlBtn = document.getElementById('pdfDownloadLink');
   
   panel.style.borderColor = config.light;
   panel.style.boxShadow = `0 12px 36px ${config.color}15`;
@@ -381,12 +429,13 @@ function selectStyle(index) {
   badge.textContent = config.name;
   badge.style.backgroundColor = config.bg;
   badge.style.color = config.dark;
+
+  dlBtn.style.backgroundColor = config.bg;
+  dlBtn.style.color = config.dark;
+  dlBtn.style.borderColor = config.light;
   
   visual.style.background = `linear-gradient(150deg, ${config.bg}, #FFFFFF)`;
 
-  // 3. Update the SVG Object
-  // By emptying the container and injecting a new object, we force the SVG animation to restart.
-  // We keep the zoom-fab intact.
   const oldObj = document.getElementById('mainSvgObj');
   if(oldObj) oldObj.remove();
 
@@ -396,17 +445,50 @@ function selectStyle(index) {
   newObj.className = 'svg-obj';
   newObj.data = config.file;
   
-  // Prepend so it sits behind the absolute positioned zoom-fab
   visual.prepend(newObj);
 }
 
-// Lightbox Logic
+// Programmatic Blob conversion to strictly download and skip internal rendering
+document.getElementById('pdfDownloadLink').addEventListener('click', async (e) => {
+  e.preventDefault();
+  document.getElementById('pdfNote').classList.add('visible');
+
+  const currentConfig = styles[activeStyleIndex];
+  
+  try {
+    const response = await fetch(currentConfig.pdf);
+    const blob = await response.blob();
+    
+    // Forcing octet-stream tells the browser it's an unrenderable binary stream, preventing preview
+    const forcedBlob = new Blob([blob], { type: 'application/octet-stream' });
+    const downloadUrl = window.URL.createObjectURL(forcedBlob);
+    
+    const triggerLink = document.createElement('a');
+    triggerLink.href = downloadUrl;
+    triggerLink.download = currentConfig.pdf;
+    
+    document.body.appendChild(triggerLink);
+    triggerLink.click();
+    
+    document.body.removeChild(triggerLink);
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (err) {
+    // Fallback if local/CORS constraints stop fetch (e.g. running mock UI from file://)
+    const fallbackLink = document.createElement('a');
+    fallbackLink.href = currentConfig.pdf;
+    fallbackLink.download = currentConfig.pdf;
+    document.body.appendChild(fallbackLink);
+    fallbackLink.click();
+    document.body.removeChild(fallbackLink);
+  }
+});
+
 function openZoom(type) {
   const lb = document.getElementById('lb');
   const lbTitle = document.getElementById('lbTitle');
   const lbBody = document.getElementById('lbBody');
   
-  lbBody.innerHTML = ''; // Clear previous
+  lbBody.innerHTML = ''; 
 
   if (type === 'diagram') {
     lbTitle.textContent = 'Source Diagram';
@@ -423,7 +505,7 @@ function openZoom(type) {
   }
   
   lb.classList.add('open');
-  document.body.style.overflow = 'hidden'; // prevent background scrolling
+  document.body.style.overflow = 'hidden'; 
 }
 
 function closeZoom(e, force) {
@@ -431,19 +513,16 @@ function closeZoom(e, force) {
     document.getElementById('lb').classList.remove('open');
     document.body.style.overflow = '';
     
-    // Slight delay to allow fade out before destroying element (stops SVG memory usage)
     setTimeout(() => {
         document.getElementById('lbBody').innerHTML = '';
     }, 200);
   }
 }
 
-// Escape key to close modal
 document.addEventListener('keydown', e => { 
   if (e.key === 'Escape') closeZoom(null, true); 
 });
 
-// Initialize default selection on page load
 window.onload = () => {
   selectStyle(0);
 };
